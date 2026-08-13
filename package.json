@@ -1,0 +1,13 @@
+{
+  "name": "lamalatodmala",
+  "version": "1.0.0",
+  "private": true,
+  "description": "หมาล่าทอด — Preorder Queue Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
