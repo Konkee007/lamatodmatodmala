@@ -1,1 +1,1629 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>หมาล่าทอด — สั่งจองคิว</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap');
 
+:root{
+  --ink:#1C1410;
+  --ink-soft:#2A1D17;
+  --red:#C81D25;
+  --red-dark:#8E1015;
+  --ember:#FF6B35;
+  --gold:#E8B923;
+  --cream:#F5EBDD;
+  --cream-dim:#E9DBC4;
+  --jade:#4C7A5E;
+  --line:rgba(245,235,221,0.14);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(circle at 15% 0%, rgba(200,29,37,0.25), transparent 45%),
+    radial-gradient(circle at 90% 10%, rgba(232,185,35,0.10), transparent 40%),
+    var(--ink);
+  color:var(--cream);
+  font-family:'Sarabun',sans-serif;
+  min-height:100vh;
+}
+h1,h2,h3,.display{font-family:'Kanit',sans-serif;}
+#app{max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; position:relative;}
+button{font-family:'Sarabun',sans-serif; cursor:pointer;}
+input,select{font-family:'Sarabun',sans-serif;}
+::selection{background:var(--ember); color:var(--ink);}
+
+/* ---- header ---- */
+.topbar{
+  padding:22px 20px 16px;
+  border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.brand{display:flex; align-items:center; gap:10px;}
+.brand-mark{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(145deg,var(--red),var(--red-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px; box-shadow:0 3px 0 rgba(0,0,0,0.35);
+  overflow:hidden; flex-shrink:0;
+}
+.brand-mark img{width:100%;height:100%;object-fit:cover;display:block;}
+.brand-text .t1{font-weight:700; font-size:19px; letter-spacing:0.3px;}
+.brand-text .t2{font-size:11.5px; color:var(--gold); letter-spacing:1.5px; text-transform:uppercase; margin-top:1px;}
+.header-actions{display:flex; gap:8px;}
+.admin-link{
+  background:none;border:1px solid var(--line); color:var(--cream-dim);
+  font-size:12px; padding:7px 12px; border-radius:20px; opacity:0.7; white-space:nowrap;
+}
+.admin-link:active{opacity:1;}
+.track-box{
+  background:var(--ink-soft); border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:16px;
+}
+.track-row{display:flex; gap:8px;}
+.track-row input{flex:1; text-transform:uppercase;}
+.track-row button{
+  padding:0 18px; border-radius:12px; border:none; background:var(--red); color:var(--cream); font-weight:700; font-family:'Kanit',sans-serif;
+}
+.qr-static-img{width:100%; max-width:260px; display:block; margin:0 auto; border-radius:6px;}
+.backup-box{background:var(--ink-soft); border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:14px;}
+.backup-box h3{margin:0 0 6px; font-size:15px;}
+.backup-box p{margin:0 0 12px; font-size:12.5px; color:var(--cream-dim); opacity:0.8; line-height:1.6;}
+.btn-secondary{
+  width:100%; padding:13px; border-radius:12px; border:1px solid var(--gold); background:none;
+  color:var(--gold); font-weight:700; font-size:14px; font-family:'Kanit',sans-serif; margin-bottom:8px;
+}
+.btn-secondary:active{background:rgba(232,185,35,0.1);}
+.import-msg{font-size:12.5px; margin-top:8px; padding:8px 10px; border-radius:8px; background:rgba(76,122,94,0.15); color:var(--jade);}
+.import-msg.err{background:rgba(200,29,37,0.12); color:var(--ember);}
+
+/* ---- content ---- */
+.content{flex:1; padding:18px 20px 130px;}
+.page-title{font-size:22px; font-weight:700; margin:6px 0 3px;}
+.page-sub{color:var(--cream-dim); font-size:13.5px; margin-bottom:20px; opacity:0.75;}
+
+/* ---- menu grid ---- */
+.menu-list{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
+.item-card{
+  background:var(--ink-soft);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:12px 12px 14px;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  transition:border-color .15s;
+}
+.item-card.active{border-color:rgba(232,185,35,0.55);}
+.item-emoji{
+  width:100%; aspect-ratio:1/1; max-width:300px; border-radius:14px;
+  background:rgba(255,107,53,0.12);
+  display:flex;align-items:center;justify-content:center; font-size:40px;
+  overflow:hidden;
+}
+.item-emoji img{width:100%;height:100%;object-fit:cover;display:block;}
+.item-info{width:100%; text-align:center;}
+.item-name{font-weight:600; font-size:15px; line-height:1.3;}
+.item-price{color:var(--gold); font-size:12.5px; margin-top:4px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap;}
+.stock-badge{font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; background:rgba(76,122,94,0.18); color:var(--jade);}
+.stock-badge.low{background:rgba(255,107,53,0.18); color:var(--ember);}
+.stock-badge.out{background:rgba(200,29,37,0.18); color:var(--red);}
+.item-card.soldout{opacity:0.45;}
+.stepper{display:flex; align-items:center; justify-content:center; gap:6px; flex-shrink:0;}
+.step-btn{
+  width:34px;height:34px;border-radius:9px; border:1px solid var(--line);
+  background:var(--ink); color:var(--cream); font-size:17px; font-weight:600;
+  display:flex;align-items:center;justify-content:center; line-height:0;
+}
+.step-btn:active{background:var(--red);}
+.step-btn:disabled{opacity:0.3;}
+.step-val{width:30px; text-align:center; font-weight:700; font-size:15px; font-family:'Kanit',sans-serif;}
+.stock-field{background:var(--ink-soft); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:10px; display:flex; align-items:center; gap:10px;}
+.stock-field .sf-emoji{font-size:20px; width:34px; height:34px; text-align:center; border-radius:9px; overflow:hidden; flex-shrink:0; background:rgba(255,107,53,0.12); display:flex; align-items:center; justify-content:center;}
+.stock-field .sf-emoji img{width:100%;height:100%;object-fit:cover;display:block;}
+.stock-field .sf-name{flex:1; font-size:14px; font-weight:600; min-width:0;}
+.stock-field .sf-stepper{display:flex; align-items:center; gap:5px; flex-shrink:0;}
+.stock-field .sf-step-btn{
+  width:28px;height:28px;border-radius:8px; border:1px solid var(--line);
+  background:var(--ink); color:var(--cream); font-size:16px; font-weight:600;
+  display:flex;align-items:center;justify-content:center; line-height:0; flex-shrink:0;
+}
+.stock-field .sf-step-btn:active{background:var(--red);}
+.stock-field input{width:64px; padding:9px 6px; border-radius:9px; background:var(--ink); border:1px solid var(--line); color:var(--cream); font-size:14px; text-align:center;}
+.stock-field .sf-unlim{font-size:11px; color:var(--cream-dim); display:flex; align-items:center; gap:4px; white-space:nowrap;}
+
+/* ---- sticky cart bar ---- */
+.cart-bar{
+  position:fixed; bottom:0; left:0; right:0;
+  max-width:520px; margin:0 auto;
+  background:linear-gradient(180deg, rgba(28,20,16,0.5), var(--ink) 30%);
+  padding:14px 20px 22px; border-top:1px solid var(--line);
+}
+.cart-summary{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; padding:0 2px;}
+.cart-summary .lbl{font-size:12.5px; color:var(--cream-dim); opacity:0.8;}
+.cart-summary .amt{font-family:'Kanit',sans-serif; font-size:24px; font-weight:700; color:var(--gold);}
+.btn-primary{
+  width:100%; padding:15px; border:none; border-radius:14px;
+  background:linear-gradient(145deg,var(--ember),var(--red));
+  color:var(--cream); font-weight:700; font-size:16px; font-family:'Kanit',sans-serif;
+  letter-spacing:0.3px; box-shadow:0 4px 0 var(--red-dark);
+}
+.btn-primary:active{transform:translateY(2px); box-shadow:0 2px 0 var(--red-dark);}
+.btn-primary:disabled{opacity:0.35; box-shadow:none;}
+.btn-ghost{
+  width:100%; padding:14px; border-radius:14px; margin-top:10px;
+  background:none; border:1px solid var(--line); color:var(--cream-dim); font-weight:600; font-size:14.5px;
+}
+
+/* ---- form ---- */
+.field{margin-bottom:16px;}
+.field label{display:block; font-size:13px; color:var(--gold); margin-bottom:7px; font-weight:600;}
+.field input{
+  width:100%; padding:13px 14px; border-radius:12px;
+  background:var(--ink-soft); border:1px solid var(--line); color:var(--cream); font-size:15px;
+}
+.field input:focus{outline:none; border-color:var(--ember);}
+.order-recap{
+  background:var(--ink-soft); border:1px solid var(--line); border-radius:14px;
+  padding:14px 16px; margin-bottom:20px;
+}
+.order-recap .row{display:flex; justify-content:space-between; font-size:13.5px; padding:4px 0; color:var(--cream-dim);}
+.order-recap .row span:last-child{color:var(--cream); font-weight:600;}
+.order-recap .total-row{border-top:1px solid var(--line); margin-top:6px; padding-top:9px; font-weight:700;}
+.order-recap .total-row span{color:var(--gold) !important; font-family:'Kanit',sans-serif; font-size:16px;}
+
+/* ---- payment ---- */
+.pay-total-box{
+  text-align:center; padding:22px 0 18px;
+}
+.pay-total-box .lbl{font-size:12.5px; color:var(--cream-dim); letter-spacing:1px; text-transform:uppercase;}
+.pay-total-box .amt{font-family:'Kanit',sans-serif; font-size:44px; font-weight:800; color:var(--gold); line-height:1.1;}
+.qr-wrap{
+  background:#fff; border-radius:18px; padding:18px;
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 18px; width:fit-content;
+}
+.pay-note{
+  background:rgba(232,185,35,0.1); border:1px solid rgba(232,185,35,0.35); border-radius:14px;
+  padding:14px 16px; margin-bottom:16px; font-size:12.5px; line-height:1.7; color:var(--cream-dim);
+}
+.pay-note b{color:var(--gold);}
+.pay-note .pn-ig{color:var(--gold); font-weight:700;}
+.upload-box{
+  border:1.5px dashed rgba(245,235,221,0.3); border-radius:16px;
+  padding:22px 16px; text-align:center; margin-bottom:16px; position:relative;
+}
+.upload-box input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer;}
+.upload-box .up-icon{font-size:28px; margin-bottom:6px;}
+.upload-box .up-txt{font-size:14px; font-weight:600;}
+.upload-box .up-sub{font-size:12px; color:var(--cream-dim); opacity:0.7; margin-top:3px;}
+.slip-preview{width:100%; border-radius:14px; margin-bottom:16px; display:block; border:1px solid var(--line);}
+
+/* ---- ticket / confirmation ---- */
+.ticket{
+  background:var(--cream); color:var(--ink); border-radius:18px; padding:26px 22px;
+  position:relative; margin-top:10px;
+  background-image: radial-gradient(circle, var(--ink) 3px, transparent 3.2px);
+  background-size: 16px 16px;
+  background-repeat: repeat-x;
+  background-position: bottom -8px left 0;
+}
+.ticket-inner{border-bottom:2px dashed rgba(28,20,16,0.25); padding-bottom:18px; margin-bottom:14px;}
+.ticket .eyebrow{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--red); font-weight:700;}
+.ticket .queue-no{font-family:'Kanit',sans-serif; font-size:52px; font-weight:800; line-height:1; margin:6px 0 4px; color:var(--red-dark);}
+.ticket .status-pill{
+  display:inline-block; padding:5px 13px; border-radius:20px; font-size:12.5px; font-weight:700;
+  background:rgba(200,29,37,0.1); color:var(--red-dark); margin-top:6px;
+}
+.ticket .status-pill.st-wait{background:rgba(232,185,35,0.16); color:#96760f;}
+.ticket .status-pill.st-progress{background:rgba(255,107,53,0.16); color:var(--red-dark);}
+.ticket .status-pill.st-ready{background:rgba(76,122,94,0.16); color:var(--jade);}
+.ticket .status-pill.st-done{background:rgba(120,120,120,0.18); color:#6b6b6b;}
+.ticket .status-pill.st-mismatch{background:rgba(200,29,37,0.14); color:var(--red);}
+.ticket .status-pill.st-cancel{background:rgba(60,60,60,0.16); color:#5a5a5a;}
+.ticket .row{display:flex; justify-content:space-between; font-size:13.5px; padding:5px 0; opacity:0.85;}
+.ticket .row.total{font-weight:700; border-top:1px solid rgba(28,20,16,0.15); margin-top:6px; padding-top:9px; opacity:1;}
+
+/* ---- admin ---- */
+.pin-gate{padding-top:60px; text-align:center;}
+.pin-error{color:var(--ember); font-size:13px; min-height:18px; margin:-6px 0 6px;}
+.step-btn.ok{background:rgba(76,122,94,0.35); border-color:var(--jade);}
+.pin-gate input{
+  width:160px; text-align:center; letter-spacing:8px; font-size:22px; padding:14px;
+  border-radius:12px; background:var(--ink-soft); border:1px solid var(--line); color:var(--cream); margin:18px 0;
+}
+.admin-tabs{display:flex; gap:8px; margin-bottom:16px;}
+.admin-tab{
+  flex:1; padding:10px; border-radius:10px; border:1px solid var(--line); background:none;
+  color:var(--cream-dim); font-size:13px; font-weight:600;
+}
+.admin-tab.on{background:var(--red); color:var(--cream); border-color:var(--red);}
+.admin-topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:10px;}
+.sound-toggle{
+  background:var(--ink-soft); border:1px solid var(--line); color:var(--cream-dim);
+  font-size:12px; font-weight:600; padding:7px 12px; border-radius:20px;
+  display:flex; align-items:center; gap:6px; white-space:nowrap; flex-shrink:0;
+}
+.sound-toggle.off{opacity:0.55;}
+.sound-toggle .st-dot{width:7px;height:7px;border-radius:50%; background:var(--jade);}
+.sound-toggle.off .st-dot{background:var(--ember);}
+@keyframes toastIn{from{opacity:0; transform:translateY(-16px) scale(0.96);} to{opacity:1; transform:translateY(0) scale(1);}}
+@keyframes toastPulseRing{0%{box-shadow:0 0 0 0 rgba(232,185,35,0.55);} 70%{box-shadow:0 0 0 14px rgba(232,185,35,0);} 100%{box-shadow:0 0 0 0 rgba(232,185,35,0);}}
+.order-toast-wrap{position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:80; width:calc(100% - 32px); max-width:460px; pointer-events:none;}
+.order-toast{
+  pointer-events:auto; background:linear-gradient(155deg, var(--red), var(--red-dark)); color:var(--cream);
+  border-radius:16px; padding:16px 16px 14px; box-shadow:0 12px 30px rgba(0,0,0,0.45), 0 0 0 1px rgba(232,185,35,0.3);
+  animation:toastIn .28s cubic-bezier(.2,.8,.2,1), toastPulseRing 1.6s ease-out 1;
+  display:flex; gap:12px; align-items:flex-start; cursor:pointer;
+}
+.order-toast .ot-icon{
+  width:40px; height:40px; border-radius:12px; background:rgba(232,185,35,0.22); border:1px solid rgba(232,185,35,0.5);
+  display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+}
+.order-toast .ot-body{flex:1; min-width:0;}
+.order-toast .ot-title{font-family:'Kanit',sans-serif; font-weight:700; font-size:14.5px; display:flex; align-items:center; gap:8px; margin-bottom:3px;}
+.order-toast .ot-q{background:var(--gold); color:var(--ink); font-size:12px; font-weight:800; padding:2px 8px; border-radius:8px;}
+.order-toast .ot-cust{font-size:12.5px; opacity:0.92; margin-bottom:2px;}
+.order-toast .ot-items{font-size:11.5px; opacity:0.8; line-height:1.5;}
+.order-toast .ot-total{font-size:12.5px; font-weight:700; color:var(--gold); margin-top:4px;}
+.order-toast .ot-close{
+  background:rgba(0,0,0,0.2); border:none; color:var(--cream); width:24px; height:24px; border-radius:50%;
+  font-size:14px; line-height:1; flex-shrink:0; opacity:0.8;
+}
+.order-item{
+  background:var(--ink-soft); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:12px;
+}
+.order-item .oi-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;}
+.order-item .oi-q{font-family:'Kanit',sans-serif; font-weight:700; font-size:20px; color:var(--gold);}
+.order-item .oi-time{font-size:11px; color:var(--cream-dim); opacity:0.6;}
+.order-item .oi-cust{font-size:13.5px; margin-bottom:8px; color:var(--cream-dim);}
+.order-item .oi-cust b{color:var(--cream);}
+.order-item .oi-items{font-size:13px; color:var(--cream-dim); margin-bottom:10px; line-height:1.6;}
+.order-item .oi-total{font-weight:700; color:var(--gold); font-family:'Kanit',sans-serif;}
+.oi-slip-thumb{width:100%; max-width:160px; border-radius:10px; margin-bottom:10px; display:block; border:1px solid var(--line);}
+.status-select{
+  width:100%; padding:10px; border-radius:10px; background:var(--ink); border:1px solid var(--line); color:var(--cream); font-size:13.5px; font-weight:600;
+}
+.status-select.st-wait{border-color:var(--gold); color:var(--gold);}
+.status-select.st-progress{border-color:var(--ember); color:var(--ember);}
+.status-select.st-ready{border-color:var(--jade); color:var(--jade);}
+.status-select.st-done{border-color:#8a8a8a; color:#b0b0b0;}
+.status-select.st-mismatch{border-color:var(--red); color:var(--red);}
+.status-select.st-cancel{border-color:#5a5a5a; color:#8a8a8a;}
+.settings-box .field label{color:var(--cream-dim);}
+.settings-box .field-hint{font-size:11.5px; color:var(--cream-dim); opacity:0.75; margin:-10px 0 12px; line-height:1.5;}
+.settings-box h3{font-size:14.5px; margin:22px 0 4px;}
+.imgrow{background:var(--ink-soft); border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin-bottom:8px; display:flex; align-items:center; gap:10px;}
+.imgrow .ir-thumb{width:42px;height:42px;border-radius:10px;overflow:hidden;background:rgba(255,107,53,0.12);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.imgrow .ir-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.imgrow .ir-name{flex:1;font-size:13px;font-weight:600;min-width:0;}
+.imgrow .ir-actions{display:flex;gap:6px;flex-shrink:0;}
+.ir-upload{position:relative; padding:7px 11px; border-radius:9px; border:1px solid var(--gold); color:var(--gold); font-size:11.5px; font-weight:700; overflow:hidden; white-space:nowrap; display:inline-block;}
+.ir-upload input{position:absolute; inset:0; opacity:0; cursor:pointer;}
+.ir-remove{padding:7px 9px; border-radius:9px; border:1px solid var(--line); background:none; color:var(--cream-dim); font-size:11.5px; white-space:nowrap;}
+.logo-upload-row{display:flex; align-items:center; gap:14px; margin-bottom:4px;}
+.logo-preview{width:56px;height:56px;border-radius:14px;overflow:hidden;background:rgba(255,107,53,0.12);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.logo-preview img{width:100%;height:100%;object-fit:cover;display:block;}
+.empty-state{text-align:center; padding:60px 20px; color:var(--cream-dim); opacity:0.7; font-size:14px;}
+.back-link{background:none; border:none; color:var(--cream-dim); font-size:13.5px; margin-bottom:14px; display:flex; align-items:center; gap:5px; opacity:0.8;}
+.modal-bg{position:fixed; inset:0; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;}
+.modal-bg img{max-width:100%; max-height:85vh; border-radius:12px;}
+.save-modal{position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:60; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; gap:14px; text-align:center;}
+.save-modal img{max-width:100%; max-height:60vh; border-radius:14px; border:1px solid var(--line); box-shadow:0 8px 30px rgba(0,0,0,0.5);}
+.save-modal .sm-hint{font-size:14px; color:var(--cream); font-weight:600; line-height:1.6; max-width:320px;}
+.save-modal .sm-close{margin-top:4px; padding:11px 24px; border-radius:12px; border:1px solid var(--line); background:none; color:var(--cream-dim); font-size:13.5px; font-weight:600;}
+.pickup-modal{position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:61; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; gap:14px; text-align:center;}
+.pickup-modal .pm-box{background:var(--cream, #F5EBDD); border-radius:18px; padding:28px 22px; max-width:340px; box-shadow:0 12px 40px rgba(0,0,0,0.5); animation:pm-pop .28s cubic-bezier(.26,1.4,.44,1);}
+@keyframes pm-pop{0%{transform:scale(0.82); opacity:0;} 60%{transform:scale(1.04); opacity:1;} 100%{transform:scale(1); opacity:1;}}
+.pickup-modal .pm-title{font-size:17px; font-weight:800; color:#8E1015; margin-bottom:8px;}
+.pickup-modal .pm-text{font-size:14.5px; font-weight:600; color:#1C1410; line-height:1.6;}
+.pickup-modal .pm-close{margin-top:18px; padding:11px 28px; border-radius:12px; border:none; background:#8E1015; color:#F5EBDD; font-size:14px; font-weight:700; width:100%;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast-root"></div>
+
+<script>
+/* Menu display info only (name/emoji) — live stock numbers come from the
+   server so the backend is always the single source of truth. */
+const MENU = [
+  {id:'bacon_enoki', name:'เบคอนพันเห็ดเข็มทอง', emoji:'🥓'},
+  {id:'pork_enoki', name:'หมูสามชั้นพันเห็ดเข็มทอง', emoji:'🍖'},
+  {id:'bologna', name:'โบโลน่า', emoji:'🌭'},
+  {id:'tofu_cheese', name:'เต้าหู้ชีส', emoji:'🧀'},
+  {id:'corn', name:'ข้าวโพด', emoji:'🌽'},
+  {id:'sausage_cheese', name:'ไส้กรอกชีส', emoji:'🧆'},
+  {id:'potato', name:'มันฝรั่ง', emoji:'🥔'},
+];
+const PRICE = 15;
+const STATUSES = ['รอตรวจสอบสลิป','ยืนยันคำสั่งซื้อ / กำลังทอด','พร้อมรับ','ส่งเรียบร้อย (ปิดออเดอร์)','ยอดไม่ตรง','ยกเลิก'];
+const CLOSED_STATUS = 'ส่งเรียบร้อย (ปิดออเดอร์)';
+const STATUS_CLASS = {
+  'รอตรวจสอบสลิป':'st-wait',
+  'ยืนยันคำสั่งซื้อ / กำลังทอด':'st-progress',
+  'พร้อมรับ':'st-ready',
+  'ส่งเรียบร้อย (ปิดออเดอร์)':'st-done',
+  'ยอดไม่ตรง':'st-mismatch',
+  'ยกเลิก':'st-cancel',
+};
+function statusClass(status){ return STATUS_CLASS[status] || 'st-wait'; }
+const DEFAULT_SETTINGS = {shopName:'หมาล่าทอด', qrImage:null, logoImage:null};
+
+let state = {
+  screen:'menu',
+  cart:{},
+  customer:{name:'', room:'', phone:''},
+  slipDataUrl:null,
+  currentOrder:null,
+  settings:null,       // public settings {shopName, qrImage, logoImage}
+  stockMap:{},          // {itemId: number|null}  null = unlimited
+  itemImages:{},         // {itemId: imageUrl|null} — falls back to emoji when null
+  live:false,           // SSE connection status
+  saveImageModal:null,   // {url, filename} — iOS "long-press to save" helper
+  pickupNotice:false,    // shows the "must pick up in person" popup right after ordering
+  adminPin:null,         // held in memory only after successful login
+  adminAuthed:false,
+  adminTab:'orders',
+  adminOrders:[],
+  adminOrdersLoaded:false,
+  adminStockDraft:null,
+  adminSettingsFull:null,
+  modalImg:null,
+  pinInput:'',
+  pinError:null,
+  settingsDraft:null,
+  saving:false,
+  error:null,
+  trackInput:'',
+  trackResult:null,
+  trackError:null,
+  trackLoading:false,
+  backupMsg:null,
+  orderToast:null,       // {id, queueNo, name, room, itemsText, total} — popup shown to admin on new order
+  soundOn:loadSoundPref(),
+};
+
+function cartCount(){ return Object.values(state.cart).reduce((a,b)=>a+b,0); }
+function cartTotal(){ return cartCount()*PRICE; }
+function esc(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function stockOf(id){ return Object.prototype.hasOwnProperty.call(state.stockMap,id) ? state.stockMap[id] : null; }
+function itemThumb(m){
+  const img = state.itemImages && state.itemImages[m.id];
+  return img ? `<img src="${img}" alt="${esc(m.name)}">` : m.emoji;
+}
+/* resize + compress a picked image file down to a data URL, used for slips, QR, logo, product photos */
+function fileToResizedDataUrl(file, maxW, quality, mime){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const scale = Math.min(1, maxW/img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width*scale); canvas.height = Math.round(img.height*scale);
+        const ctx = canvas.getContext('2d');
+        if(mime==='image/jpeg'){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL(mime, quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ---------------- API helper (talks to our own Node server) ---------------- */
+async function api(path, opts={}){
+  const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  if(state.adminPin) headers['x-admin-pin'] = state.adminPin;
+  const res = await fetch(path, {
+    method: opts.method||'GET',
+    headers,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  let data = null;
+  try{ data = await res.json(); }catch(e){}
+  if(!res.ok){
+    const err = new Error((data && data.error) || ('HTTP '+res.status));
+    err.status = res.status; err.data = data;
+    throw err;
+  }
+  return data;
+}
+
+async function ensureSettings(){
+  try{
+    const [settings, menu] = await Promise.all([
+      api('/api/public-settings'),
+      api('/api/menu'),
+    ]);
+    state.settings = settings;
+    state.stockMap = {};
+    state.itemImages = {};
+    menu.forEach(m=>{ state.stockMap[m.id] = m.stock; state.itemImages[m.id] = m.image || null; });
+  }catch(e){
+    state.settings = {...DEFAULT_SETTINGS};
+  }
+  return state.settings;
+}
+
+/* ---------------- new-order sound + desktop notification ---------------- */
+function loadSoundPref(){
+  try{ const v = localStorage.getItem('malashop_sound'); return v===null ? true : v==='1'; }catch(e){ return true; }
+}
+function toggleSound(){
+  state.soundOn = !state.soundOn;
+  try{ localStorage.setItem('malashop_sound', state.soundOn ? '1' : '0'); }catch(e){}
+  if(state.soundOn){ unlockAudio(); playNotificationSound(); }
+  render();
+}
+let audioCtx = null;
+function unlockAudio(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  }catch(e){}
+}
+// two-note "ding-dong" chime built with the Web Audio API — no sound file needed
+function playNotificationSound(){
+  if(!state.soundOn) return;
+  try{
+    unlockAudio();
+    if(!audioCtx) return;
+    const now = audioCtx.currentTime;
+    [[880, now, 0.22], [1174.66, now + 0.16, 0.32]].forEach(([freq, start, dur])=>{
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.32, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(start); osc.stop(start + dur + 0.03);
+    });
+  }catch(e){}
+}
+function requestDesktopNotifyPermission(){
+  try{
+    if('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+  }catch(e){}
+}
+// only fires when the admin has the tab in the background — the in-page toast covers the rest
+function maybeShowDesktopNotification(order){
+  try{
+    if('Notification' in window && Notification.permission === 'granted' && document.hidden){
+      const n = new Notification('มีออเดอร์ใหม่ #' + order.queueNo, {
+        body: (order.customer && order.customer.name ? order.customer.name + ' · ' : '') + '฿' + order.total,
+        tag: 'order-' + order.id,
+      });
+      n.onclick = ()=>{ window.focus(); };
+    }
+  }catch(e){}
+}
+
+/* ---------------- realtime stock stream ---------------- */
+function connectLiveStock(){
+  try{
+    const es = new EventSource('/api/stream');
+    es.addEventListener('open', ()=>{ state.live=true; if(state.screen==='menu') render(); });
+    es.addEventListener('menu', (ev)=>{
+      try{
+        const menu = JSON.parse(ev.data);
+        state.stockMap = {};
+        state.itemImages = {};
+        menu.forEach(m=>{ state.stockMap[m.id] = m.stock; state.itemImages[m.id] = m.image || null; });
+        state.live = true;
+        // clamp cart quantities down if stock just dropped below what's selected
+        Object.keys(state.cart).forEach(id=>{
+          const s = state.stockMap[id];
+          if(s!==null && s!==undefined && state.cart[id]>s){
+            if(s<=0) delete state.cart[id]; else state.cart[id]=s;
+          }
+        });
+        if(state.screen==='menu' || state.screen==='checkout') render();
+      }catch(e){}
+    });
+    es.addEventListener('settings', (ev)=>{
+      try{ state.settings = JSON.parse(ev.data); if(state.screen!=='admin') render(); }catch(e){}
+    });
+    es.addEventListener('new-order', (ev)=>{
+      // a customer just placed an order — pull the fresh list into the admin panel, no page reload needed
+      if(state.adminAuthed){
+        let queueNo = null;
+        try{ queueNo = JSON.parse(ev.data).queueNo; }catch(e){}
+        state.newOrderPing = true;
+        playNotificationSound();
+        handleNewOrderArrived(queueNo);
+        setTimeout(()=>{ state.newOrderPing=false; render(); }, 2000);
+      }
+    });
+    es.onerror = ()=>{ state.live=false; if(state.screen==='menu') render(); };
+  }catch(e){ /* EventSource unsupported — front-end still works, just without live push */ }
+}
+
+function setScreen(s){ state.screen = s; state.error=null; render(); window.scrollTo(0,0); }
+
+function changeQty(id, delta){
+  const cur = state.cart[id] || 0;
+  let next = Math.max(0, cur+delta);
+  const stock = stockOf(id);
+  if(stock!==null && stock!==undefined) next = Math.min(next, stock);
+  if(next===0) delete state.cart[id]; else state.cart[id]=next;
+  render();
+}
+
+function goCheckout(){ if(cartCount()===0) return; setScreen('checkout'); }
+
+function goPayment(){
+  const f = document.getElementById('f-name'), r = document.getElementById('f-room'), p = document.getElementById('f-phone');
+  const name = f.value.trim(), room = r.value.trim(), phone = p.value.trim();
+  if(!name || !room || !phone){ state.error='กรอกข้อมูลให้ครบก่อนนะ'; render(); return; }
+  if(!/^\d+\/\d+$/.test(room)){ state.error='กรอกห้องให้ถูกรูปแบบ เช่น 1/1, 2/3, 6/11'; render(); return; }
+  if(!/^\d{10}$/.test(phone)){ state.error='เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก ห้ามมีตัวอักษร'; render(); return; }
+  state.customer = {name, room, phone};
+  setScreen('payment');
+}
+
+function handleSlipFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const maxW = 900;
+      const scale = Math.min(1, maxW/img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width*scale; canvas.height = img.height*scale;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      state.slipDataUrl = canvas.toDataURL('image/jpeg', 0.65);
+      render();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitOrder(){
+  if(!state.slipDataUrl){ state.error='แนบรูปสลิปก่อนนะ'; render(); return; }
+  state.saving = true; render();
+  try{
+    const order = await api('/api/orders', {method:'POST', body:{
+      items: {...state.cart},
+      customer: state.customer,
+      slipImage: state.slipDataUrl,
+    }});
+    state.currentOrder = order;
+    state.cart = {}; state.slipDataUrl=null;
+    state.saving = false;
+    state.pickupNotice = true;
+    setScreen('confirm');
+  }catch(e){
+    state.saving=false;
+    state.error = (e.data && e.data.error) || 'บันทึกไม่สำเร็จ ลองอีกครั้งนะ';
+    render();
+  }
+}
+
+function resetOrder(){
+  state.cart={}; state.customer={name:'',room:'',phone:''}; state.slipDataUrl=null; state.currentOrder=null;
+  state.pickupNotice=false;
+  setScreen('menu');
+}
+
+/* ---- tracking ---- */
+function goTrack(){ state.trackResult=null; state.trackError=null; state.trackInput=''; setScreen('track'); }
+
+async function checkOrderStatus(){
+  const input = document.getElementById('f-track');
+  const val = (input ? input.value : state.trackInput).trim().toUpperCase();
+  if(!val){ state.trackError='กรอกหมายเลขคิวก่อนนะ'; state.trackResult=null; render(); return; }
+  state.trackInput = val;
+  state.trackLoading = true; state.trackError=null; state.trackResult=null; render();
+  try{
+    state.trackResult = await api('/api/orders/track/'+encodeURIComponent(val));
+  }catch(e){
+    state.trackError = 'ไม่พบคำสั่งซื้อหมายเลข ' + esc(val) + ' ตรวจสอบเลขคิวอีกครั้งนะ';
+  }
+  state.trackLoading = false;
+  render();
+}
+
+/* ---- receipt image (save to device) ---- */
+async function drawTicketCanvas(order){
+  try{ await document.fonts.ready; }catch(e){}
+  const w=640, h=760;
+  const canvas = document.createElement('canvas');
+  canvas.width=w; canvas.height=h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#1C1410'; ctx.fillRect(0,0,w,h);
+  const cx=w/2, top=36, cw=w-72, ch=h-72;
+  roundRect(ctx, 36, top, cw, ch, 22); ctx.fillStyle='#F5EBDD'; ctx.fill();
+
+  ctx.textAlign='center';
+  ctx.fillStyle='#C81D25';
+  ctx.font='700 13px Kanit, sans-serif';
+  ctx.fillText('คิวของคุณ', cx, top+50);
+
+  ctx.fillStyle='#8E1015';
+  ctx.font='800 84px Kanit, sans-serif';
+  ctx.fillText(order.queueNo, cx, top+150);
+
+  ctx.font='700 16px Sarabun, sans-serif';
+  const pillColors = {
+    'st-wait':{bg:'rgba(232,185,35,0.16)', fg:'#96760f'},
+    'st-progress':{bg:'rgba(255,107,53,0.16)', fg:'#8E1015'},
+    'st-ready':{bg:'rgba(76,122,94,0.16)', fg:'#4C7A5E'},
+    'st-done':{bg:'rgba(120,120,120,0.18)', fg:'#6b6b6b'},
+    'st-mismatch':{bg:'rgba(200,29,37,0.14)', fg:'#C81D25'},
+    'st-cancel':{bg:'rgba(60,60,60,0.16)', fg:'#5a5a5a'},
+  };
+  const pc = pillColors[statusClass(order.status)] || pillColors['st-wait'];
+  const pillW = ctx.measureText(order.status).width + 40;
+  roundRect(ctx, cx-pillW/2, top+172, pillW, 34, 17);
+  ctx.fillStyle=pc.bg; ctx.fill();
+  ctx.fillStyle=pc.fg;
+  ctx.fillText(order.status, cx, top+195);
+
+  // dashed divider
+  ctx.strokeStyle='rgba(28,20,16,0.25)'; ctx.setLineDash([6,6]); ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(36+24, top+232); ctx.lineTo(36+cw-24, top+232); ctx.stroke();
+  ctx.setLineDash([]);
+
+  let y = top+270;
+  ctx.textAlign='left';
+  ctx.font='600 15px Sarabun, sans-serif'; ctx.fillStyle='#1C1410';
+  const line=(l,r)=>{
+    ctx.textAlign='left'; ctx.fillStyle='rgba(28,20,16,0.7)'; ctx.font='500 14px Sarabun, sans-serif';
+    ctx.fillText(l, 36+24, y);
+    ctx.textAlign='right'; ctx.fillStyle='#1C1410'; ctx.font='600 14px Sarabun, sans-serif';
+    ctx.fillText(r, 36+cw-24, y);
+    y+=28;
+  };
+  line('ผู้สั่ง', order.customer.name);
+  line('ห้อง', order.customer.room);
+  y+=6;
+  Object.entries(order.items).forEach(([id,q])=>{
+    const item = MENU.find(m=>m.id===id);
+    line((item?item.name:id)+' × '+q, '฿'+(q*PRICE));
+  });
+  ctx.strokeStyle='rgba(28,20,16,0.15)'; ctx.setLineDash([]); ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(36+24, y+2); ctx.lineTo(36+cw-24, y+2); ctx.stroke();
+  y+=32;
+  ctx.textAlign='left'; ctx.fillStyle='#8E1015'; ctx.font='700 17px Kanit, sans-serif';
+  ctx.fillText('ยอดชำระ', 36+24, y);
+  ctx.textAlign='right'; ctx.fillText('฿'+order.total, 36+cw-24, y);
+
+  return canvas;
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function isIOSDevice(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
+
+async function saveTicketImage(order){
+  const canvas = await drawTicketCanvas(order);
+  const filename = 'receipt-'+order.queueNo+'.png';
+
+  const blob = await new Promise(resolve=> canvas.toBlob(resolve, 'image/png'));
+  if(!blob){
+    // last-resort fallback if toBlob isn't supported at all
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    return;
+  }
+
+  // 1) native share sheet — best experience on phones, saves straight to Photos/Files
+  try{
+    const file = new File([blob], filename, {type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]}) && navigator.share){
+      await navigator.share({files:[file], title:'ใบเสร็จคิว '+order.queueNo});
+      return;
+    }
+  }catch(e){
+    if(e && e.name==='AbortError') return; // user closed the share sheet on purpose
+    // otherwise fall through to the next method
+  }
+
+  const url = URL.createObjectURL(blob);
+
+  // 2) iOS Safari ignores the <a download> attribute for images — it just opens
+  //    the picture instead of saving it. Show it full-screen so the user can
+  //    long-press → "บันทึกลงในรูปภาพ" / "Save Image", which always works.
+  if(isIOSDevice()){
+    state.saveImageModal = {url, filename};
+    render();
+    return;
+  }
+
+  // 3) everywhere else (Android Chrome, desktop browsers): normal download
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 4000);
+}
+
+/* ---- backup / export / import (saves to the shop's own computer) ---- */
+function exportExcel(){
+  if(!state.adminOrders.length){ state.backupMsg={type:'err', text:'ยังไม่มีออเดอร์ให้ดาวน์โหลด'}; render(); return; }
+  const rows = state.adminOrders.map(o=>{
+    const itemsTxt = Object.entries(o.items).map(([id,q])=>{
+      const item = MENU.find(m=>m.id===id);
+      return (item?item.name:id)+' x'+q;
+    }).join(', ');
+    return {
+      'เลขคิว': o.queueNo,
+      'วันเวลาที่สั่ง': new Date(o.createdAt).toLocaleString('th-TH'),
+      'ชื่อผู้สั่ง': o.customer.name,
+      'ห้อง': o.customer.room,
+      'เบอร์โทร': o.customer.phone,
+      'รายการ': itemsTxt,
+      'ยอดชำระ': o.total,
+      'สถานะ': o.status,
+      'มีรูปสลิป': o.slipImage ? 'มี' : 'ไม่มี',
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:8},{wch:20},{wch:18},{wch:10},{wch:14},{wch:40},{wch:10},{wch:22},{wch:10}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'ออเดอร์');
+  XLSX.writeFile(wb, 'ออเดอร์-สำรอง-'+ new Date().toISOString().slice(0,10) +'.xlsx');
+  state.backupMsg = {type:'ok', text:'ดาวน์โหลดไฟล์ Excel เรียบร้อยแล้ว'};
+  render();
+}
+
+async function exportJSONBackup(){
+  state.backupMsg = null; render();
+  try{
+    const backup = await api('/api/admin/backup');
+    const blob = new Blob([JSON.stringify(backup)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'สำรองข้อมูลเต็ม-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    state.backupMsg = {type:'ok', text:'ดาวน์โหลดไฟล์สำรองแบบเต็มเรียบร้อยแล้ว เก็บไฟล์นี้ไว้ในที่ปลอดภัย เพราะมีข้อมูลลูกค้าและรูปสลิปอยู่ในนั้น'};
+  }catch(e){
+    state.backupMsg = {type:'err', text:'ยังไม่มีออเดอร์ให้สำรอง หรือดาวน์โหลดไม่สำเร็จ'};
+  }
+  render();
+}
+
+function handleImportFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e)=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!data || !Array.isArray(data.orders)) throw new Error('bad format');
+      const result = await api('/api/admin/backup/import', {method:'POST', body:data});
+      state.backupMsg = {type:'ok', text:'กู้คืนข้อมูลสำเร็จ ('+result.imported+' ออเดอร์)'};
+      await ensureSettings();
+      await loadAdminOrders();
+    }catch(err){
+      state.backupMsg = {type:'err', text:'ไฟล์ไม่ถูกต้อง หรือไม่ใช่ไฟล์สำรองที่ระบบนี้สร้าง'};
+      render();
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ---- admin ---- */
+async function loadAdminOrders(){
+  state.adminOrdersLoaded = false; render();
+  try{
+    state.adminOrders = await api('/api/admin/orders');
+  }catch(e){
+    state.adminOrders = [];
+  }
+  state.adminOrdersLoaded = true;
+  render();
+}
+
+// Same fetch, but skips the loading-spinner flip — used for live SSE refreshes
+// so the list doesn't flash/reset scroll position every time a new order lands.
+async function refreshAdminOrdersSilently(){
+  try{
+    state.adminOrders = await api('/api/admin/orders');
+    state.adminOrdersLoaded = true;
+    render();
+  }catch(e){ /* keep showing what we already had */ }
+}
+
+let orderToastTimer = null;
+async function handleNewOrderArrived(queueNo){
+  await refreshAdminOrdersSilently();
+  const order = state.adminOrders.find(o=>o.queueNo===queueNo) || state.adminOrders[0];
+  if(order) showOrderToast(order);
+}
+function showOrderToast(order){
+  const itemsText = Object.entries(order.items||{}).map(([id,qty])=>{
+    const m = MENU.find(x=>x.id===id);
+    return (m ? m.name : id) + ' ×' + qty;
+  }).join(' · ');
+  state.orderToast = {
+    id: order.id,
+    queueNo: order.queueNo,
+    name: order.customer && order.customer.name,
+    room: order.customer && order.customer.room,
+    itemsText,
+    total: order.total,
+  };
+  render();
+  maybeShowDesktopNotification(order);
+  clearTimeout(orderToastTimer);
+  orderToastTimer = setTimeout(()=>{ state.orderToast = null; render(); }, 8000);
+}
+function dismissOrderToast(){
+  clearTimeout(orderToastTimer);
+  state.orderToast = null;
+  render();
+}
+function viewOrderFromToast(){
+  clearTimeout(orderToastTimer);
+  state.orderToast = null;
+  state.adminTab = 'orders';
+  render();
+}
+
+async function loadAdminStock(){
+  try{
+    const stock = await api('/api/admin/stock');
+    state.adminStockDraft = {...stock};
+  }catch(e){
+    state.adminStockDraft = {};
+  }
+  render();
+}
+
+async function updateStatus(orderId, newStatus){
+  const idx = state.adminOrders.findIndex(o=>o.id===orderId);
+  if(idx===-1) return;
+  const prev = state.adminOrders[idx].status;
+  state.adminOrders[idx].status = newStatus;
+  render();
+  try{
+    await api('/api/admin/orders/'+orderId, {method:'PATCH', body:{status:newStatus}});
+  }catch(e){
+    state.adminOrders[idx].status = prev; render();
+  }
+}
+
+async function saveStock(){
+  const inputs = document.querySelectorAll('[data-stock-for]');
+  const stock = {};
+  inputs.forEach(inp=>{
+    const id = inp.getAttribute('data-stock-for');
+    const v = inp.value.trim();
+    stock[id] = v==='' ? null : parseInt(v,10);
+  });
+  try{
+    const updated = await api('/api/admin/stock', {method:'POST', body:{stock}});
+    state.adminStockDraft = {...updated};
+    state.stockSaved = true;
+    // flip the saved-indicator's opacity directly (no full re-render) so we
+    // don't steal focus/caret position out of the number input mid-edit
+    const ind = document.getElementById('stock-saved-indicator');
+    if(ind) ind.style.opacity = 1;
+    clearTimeout(saveStock._hideTimer);
+    saveStock._hideTimer = setTimeout(()=>{
+      state.stockSaved = false;
+      if(ind) ind.style.opacity = 0;
+    }, 1400);
+  }catch(e){ /* ignore, will retry on next change */ }
+}
+let stockSaveDebounce;
+function scheduleStockSave(delay=500){
+  clearTimeout(stockSaveDebounce);
+  stockSaveDebounce = setTimeout(saveStock, delay);
+}
+
+async function tryPin(digit){
+  if(digit==='del'){ state.pinInput = state.pinInput.slice(0,-1); state.pinError=null; render(); return; }
+  if(digit==='ok'){ return submitPin(); }
+  if(state.pinInput.length>=8) return;
+  state.pinInput += digit;
+  state.pinError = null;
+  render();
+}
+
+async function submitPin(){
+  if(!state.pinInput){ state.pinError='กรอกรหัส PIN ก่อนนะ'; render(); return; }
+  try{
+    const r = await api('/api/admin/login', {method:'POST', body:{pin:state.pinInput}});
+    if(r.ok){
+      state.adminPin = state.pinInput;
+      state.adminAuthed = true; state.pinInput=''; state.pinError=null;
+      unlockAudio(); // click that just happened counts as a user gesture — unlocks audio for later SSE-triggered chimes
+      requestDesktopNotifyPermission();
+      loadAdminOrders();
+      render();
+    } else {
+      throw new Error('wrong pin');
+    }
+  }catch(e){
+    state.pinError = 'รหัส PIN ไม่ถูกต้อง';
+    state.pinInput = '';
+    render();
+  }
+}
+
+async function goAdminSettings(){
+  state.adminTab = 'settings';
+  render();
+  try{
+    const full = await api('/api/admin/settings');
+    state.adminSettingsFull = full;
+    state.settingsDraft = {...full, itemImages:{...(full.itemImages||{})}};
+  }catch(e){
+    state.settingsDraft = {...state.settings, adminPin:'', itemImages:{...(state.itemImages||{})}};
+  }
+  render();
+}
+function handleQrFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const maxW = 700;
+      const scale = Math.min(1, maxW/img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width*scale; canvas.height = img.height*scale;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      state.settingsDraft.qrImage = canvas.toDataURL('image/png');
+      render();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleLogoFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  try{
+    const dataUrl = await fileToResizedDataUrl(file, 400, 0.9, 'image/png');
+    state.settingsDraft.logoImage = dataUrl;
+    render();
+  }catch(e){ /* ignore bad image */ }
+}
+function removeLogoImage(){
+  if(!state.settingsDraft) return;
+  state.settingsDraft.logoImage = null;
+  render();
+}
+
+async function handleItemImageFile(input, itemId){
+  const file = input.files[0];
+  if(!file) return;
+  try{
+    const dataUrl = await fileToResizedDataUrl(file, 500, 0.85, 'image/jpeg');
+    if(!state.settingsDraft.itemImages) state.settingsDraft.itemImages = {};
+    state.settingsDraft.itemImages[itemId] = dataUrl;
+    render();
+  }catch(e){ /* ignore bad image */ }
+}
+function removeItemImage(itemId){
+  if(!state.settingsDraft) return;
+  if(!state.settingsDraft.itemImages) state.settingsDraft.itemImages = {};
+  state.settingsDraft.itemImages[itemId] = null;
+  render();
+}
+
+async function saveSettings(){
+  const name = document.getElementById('s-shopname').value.trim();
+  const draft = state.settingsDraft || {};
+  const body = {
+    shopName: name || DEFAULT_SETTINGS.shopName,
+    qrImage: draft.qrImage !== undefined ? draft.qrImage : null,
+    logoImage: draft.logoImage !== undefined ? draft.logoImage : null,
+    itemImages: draft.itemImages || {},
+  };
+  try{
+    const saved = await api('/api/admin/settings', {method:'POST', body});
+    state.settings = {shopName:saved.shopName, qrImage:saved.qrImage, logoImage:saved.logoImage};
+    state.itemImages = {...(saved.itemImages||{})};
+    state.backupMsg = null;
+  }catch(e){ /* ignore, keep previous */ }
+  state.adminTab = 'orders';
+  render();
+}
+
+function exitAdmin(){
+  // Full page reload back to the storefront. Clear #backoffice from the URL first
+  // (via history, so it doesn't just do a same-page fragment jump) so a stray hash
+  // doesn't bounce the customer straight back into the admin PIN screen.
+  history.replaceState(null, '', location.pathname + location.search);
+  location.reload();
+}
+
+/* ---------------- RENDER ---------------- */
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = renderScreen() + renderSaveImageModal() + renderPickupNoticeModal();
+  attachHandlers();
+  updateOrderToast();
+}
+
+function renderOrderToast(){
+  if(!state.orderToast) return '';
+  const t = state.orderToast;
+  return `
+  <div class="order-toast-wrap">
+    <div class="order-toast" id="order-toast">
+      <div class="ot-icon">🥢</div>
+      <div class="ot-body">
+        <div class="ot-title">มีออเดอร์ใหม่! <span class="ot-q">${esc(t.queueNo)}</span></div>
+        ${t.name ? `<div class="ot-cust">${esc(t.name)}${t.room?' · ห้อง '+esc(t.room):''}</div>` : ''}
+        ${t.itemsText ? `<div class="ot-items">${esc(t.itemsText)}</div>` : ''}
+        <div class="ot-total">ยอดชำระ ฿${t.total}</div>
+      </div>
+      <button type="button" class="ot-close" id="order-toast-close">✕</button>
+    </div>
+  </div>`;
+}
+
+// The toast lives in its own root OUTSIDE #app, and we only touch the DOM here
+// when the toast actually appears/disappears/changes to a different order.
+// render() runs on every state change (cart edits, stock pushes, tab switches...),
+// and previously the toast markup was rebuilt inside app.innerHTML every single
+// time — which re-triggered the CSS entrance/pulse animation on every unrelated
+// render, making it look like it kept "restarting" or glitching. Keeping the same
+// DOM node alive across renders (unless it's genuinely a new order) fixes that.
+let lastRenderedToastId = null;
+function updateOrderToast(){
+  const root = document.getElementById('toast-root');
+  if(!root) return;
+  if(!state.orderToast){
+    if(lastRenderedToastId !== null){ root.innerHTML=''; lastRenderedToastId = null; }
+    return;
+  }
+  if(state.orderToast.id !== lastRenderedToastId){
+    root.innerHTML = renderOrderToast();
+    lastRenderedToastId = state.orderToast.id;
+    const toastEl = document.getElementById('order-toast');
+    const closeEl = document.getElementById('order-toast-close');
+    if(toastEl) toastEl.addEventListener('click', viewOrderFromToast);
+    if(closeEl) closeEl.addEventListener('click', (e)=>{ e.stopPropagation(); dismissOrderToast(); });
+  }
+  // else: same toast still showing — leave the existing node untouched so its
+  // entrance/pulse animation isn't replayed.
+}
+
+function renderSaveImageModal(){
+  if(!state.saveImageModal) return '';
+  const {url, filename} = state.saveImageModal;
+  return `
+  <div class="save-modal">
+    <div class="sm-hint">กดค้างที่รูปด้านล่าง แล้วเลือก "บันทึกลงในรูปภาพ" (Save Image) เพื่อบันทึกใบเสร็จลงเครื่อง</div>
+    <img src="${url}" alt="${esc(filename)}">
+    <button type="button" class="sm-close" id="save-modal-close">ปิด</button>
+  </div>`;
+}
+
+function renderPickupNoticeModal(){
+  if(!state.pickupNotice) return '';
+  return `
+  <div class="pickup-modal">
+    <div class="pm-box">
+      <div class="pm-title">กรุณามารับด้วยตัวเอง</div>
+      <div class="pm-text">เจ้าของคิวต้องมารับสินค้าด้วยตัวเองเท่านั้น<br>ไม่สามารถฝากให้คนอื่นมารับแทนได้</div>
+      <button type="button" class="pm-close" id="pickup-notice-close">รับทราบ</button>
+    </div>
+  </div>`;
+}
+
+function header(){
+  const shop = (state.settings && state.settings.shopName) || 'หมาล่าทอด';
+  const logo = state.settings && state.settings.logoImage;
+  return `
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark" id="brand-mark">${logo ? `<img src="${logo}" alt="โลโก้ร้าน">` : '🍢'}</div>
+      <div class="brand-text">
+        <div class="t1">${esc(shop)}</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="admin-link" id="btn-track">เช็คสถานะ</button>
+    </div>
+  </div>`;
+}
+
+function renderScreen(){
+  if(state.screen==='admin') return renderAdmin();
+  let body='';
+  if(state.screen==='menu') body = renderMenu();
+  else if(state.screen==='checkout') body = renderCheckout();
+  else if(state.screen==='payment') body = renderPayment();
+  else if(state.screen==='confirm') body = renderConfirm();
+  else if(state.screen==='track') body = renderTrack();
+  return header() + `<div class="content">${body}</div>` + (state.screen==='menu'||state.screen==='checkout'||state.screen==='payment' ? cartBar() : '');
+}
+
+function renderMenu(){
+  const rows = MENU.map(m=>{
+    const qty = state.cart[m.id]||0;
+    const stock = stockOf(m.id);
+    const soldOut = stock!==null && stock<=0;
+    const atMax = stock!==null && qty>=stock;
+    let badge = '';
+    if(stock===0) badge = `<span class="stock-badge out">หมดแล้ว</span>`;
+    else if(stock!==null && stock<=5) badge = `<span class="stock-badge low">เหลือ ${stock}</span>`;
+    else if(stock!==null) badge = `<span class="stock-badge">เหลือ ${stock}</span>`;
+    return `
+    <div class="item-card ${qty>0?'active':''} ${soldOut?'soldout':''}">
+      <div class="item-emoji">${itemThumb(m)}</div>
+      <div class="item-info">
+        <div class="item-name">${esc(m.name)}</div>
+        <div class="item-price">฿${PRICE} / ไม้ ${badge}</div>
+      </div>
+      <div class="stepper">
+        <button class="step-btn" data-act="dec" data-id="${m.id}" ${qty===0?'disabled':''}>−</button>
+        <div class="step-val">${qty}</div>
+        <button class="step-btn" data-act="inc" data-id="${m.id}" ${soldOut||atMax?'disabled':''}>+</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="page-title">เลือกไม้ที่อยากทาน</div>
+    <div class="page-sub">ทุกไม้ราคา ฿${PRICE} · จำนวนคงเหลืออัปเดตสดจากร้าน</div>
+    <div class="menu-list">${rows}</div>`;
+}
+
+function cartBar(){
+  const count = cartCount(), total = cartTotal();
+  if(state.screen==='menu'){
+    return `
+    <div class="cart-bar">
+      <div class="cart-summary"><span class="lbl">${count} ไม้ที่เลือก</span><span class="amt">฿${total}</span></div>
+      <button class="btn-primary" id="btn-checkout" ${count===0?'disabled':''}>ไปกรอกข้อมูลรับของ</button>
+    </div>`;
+  }
+  if(state.screen==='checkout'){
+    return `
+    <div class="cart-bar">
+      <button class="btn-primary" id="btn-to-payment">ไปหน้าชำระเงิน — ฿${total}</button>
+      <button class="btn-ghost" id="btn-back-menu">← กลับไปแก้ไขรายการ</button>
+    </div>`;
+  }
+  if(state.screen==='payment'){
+    return `
+    <div class="cart-bar">
+      <button class="btn-primary" id="btn-submit" ${state.saving?'disabled':''}>${state.saving?'กำลังบันทึก...':'ยืนยันการชำระเงิน'}</button>
+      <button class="btn-ghost" id="btn-back-checkout">← กลับ</button>
+    </div>`;
+  }
+  return '';
+}
+
+function recap(){
+  const rows = Object.entries(state.cart).filter(([,q])=>q>0).map(([id,q])=>{
+    const item = MENU.find(m=>m.id===id);
+    return `<div class="row"><span>${esc(item.name)} × ${q}</span><span>฿${q*PRICE}</span></div>`;
+  }).join('');
+  return `<div class="order-recap">${rows}<div class="row total-row"><span>รวมทั้งหมด</span><span>฿${cartTotal()}</span></div></div>`;
+}
+
+function renderCheckout(){
+  const c = state.customer;
+  return `
+    <div class="page-title">ข้อมูลรับของ</div>
+    <div class="page-sub">กรอกให้ครบเพื่อความสะดวกตอนเรียกคิว</div>
+    ${recap()}
+    <div class="field"><label>ชื่อผู้สั่ง</label><input id="f-name" placeholder="ชื่อ-นามสกุล หรือชื่อเล่น" value="${esc(c.name)}"></div>
+    <div class="field"><label>ห้อง / ที่อยู่รับของ</label><input id="f-room" placeholder="เช่น 1/1, 2/3, 6/11" value="${esc(c.room)}"></div>
+    <div class="field"><label>เบอร์โทรศัพท์</label><input id="f-phone" placeholder="08xxxxxxxx" inputmode="numeric" maxlength="10" value="${esc(c.phone)}"></div>
+    ${state.error?`<div style="color:var(--ember); font-size:13px; margin-top:-8px; margin-bottom:14px;">${esc(state.error)}</div>`:''}
+  `;
+}
+
+function renderPayment(){
+  const total = state.currentOrder ? state.currentOrder.total : cartTotal();
+  const qr = state.settings && state.settings.qrImage;
+  return `
+    <div class="page-title">ชำระเงิน</div>
+    <div class="page-sub">โอนเงินแล้วแนบสลิปเพื่อยืนยันคำสั่งซื้อ</div>
+    <div class="pay-total-box">
+      <div class="lbl">ยอดที่ต้องโอน</div>
+      <div class="amt">฿${total}</div>
+    </div>
+    <div class="pay-note">
+      ⚠️ <b>ก่อนโอนกรุณากรอกยอดให้ตรงกับราคาที่แสดงบนหน้าเว็บ</b><br>
+      หากโอนเงินไม่ตรงกับราคาสินค้าที่สั่ง สามารถ DM ทาง IG: <span class="pn-ig">611chineseatdog</span> แจ้งรายละเอียดพร้อมแนบหลักฐาน — ทั้งนี้ทางร้านขอสงวนสิทธิ์ไม่ทำออเดอร์ให้ในกรณีดังกล่าว
+    </div>
+    ${qr ? `<div class="qr-wrap"><img class="qr-static-img" src="${qr}"></div>`
+      : `<div class="empty-state">ร้านยังไม่ได้อัปโหลดรูป QR ร้านค้า<br>กรุณาติดต่อร้านเพื่อชำระเงิน</div>`}
+    <div class="upload-box">
+      <input type="file" accept="image/*" id="f-slip">
+      <div class="up-icon">📎</div>
+      <div class="up-txt">${state.slipDataUrl? 'เปลี่ยนรูปสลิป' : 'แนบรูปสลิปโอนเงิน'}</div>
+      <div class="up-sub">แตะเพื่อเลือกรูปจากเครื่อง</div>
+    </div>
+    ${state.slipDataUrl?`<img class="slip-preview" src="${state.slipDataUrl}">`:''}
+    ${state.error?`<div style="color:var(--ember); font-size:13px; margin-top:-8px; margin-bottom:14px;">${esc(state.error)}</div>`:''}
+  `;
+}
+
+function renderTrack(){
+  const r = state.trackResult;
+  let resultHtml = '';
+  if(state.trackLoading) resultHtml = `<div class="empty-state">กำลังค้นหา...</div>`;
+  else if(state.trackError) resultHtml = `<div style="color:var(--ember); font-size:13.5px; text-align:center; padding:10px 0;">${state.trackError}</div>`;
+  else if(r){
+    const rows = Object.entries(r.items).map(([id,q])=>{
+      const item = MENU.find(m=>m.id===id);
+      return `<div class="row"><span>${esc(item?item.name:id)} × ${q}</span><span>฿${q*PRICE}</span></div>`;
+    }).join('');
+    resultHtml = `
+    <div class="ticket">
+      <div class="ticket-inner">
+        <div class="eyebrow">คิวของคุณ</div>
+        <div class="queue-no">${esc(r.queueNo)}</div>
+        <div class="status-pill ${statusClass(r.status)}">${esc(r.status)}</div>
+      </div>
+      <div class="row"><span>ผู้สั่ง</span><span>${esc(r.customer.name)}</span></div>
+      ${rows}
+      <div class="row total"><span>ยอดชำระ</span><span>฿${r.total}</span></div>
+    </div>
+    ${r.status!==CLOSED_STATUS ? `<button class="btn-primary" id="btn-save-receipt-track" style="margin-top:18px;">บันทึกรูปใบเสร็จ</button>` : ''}`;
+  }
+  return `
+    <div class="page-title">เช็คสถานะคำสั่งซื้อ</div>
+    <div class="page-sub">กรอกหมายเลขคิวที่ได้รับตอนสั่ง เช่น A001</div>
+    <div class="track-box">
+      <div class="track-row">
+        <input id="f-track" placeholder="A001" value="${esc(state.trackInput)}">
+        <button id="btn-do-track">ค้นหา</button>
+      </div>
+    </div>
+    ${resultHtml}
+    <button class="btn-ghost" id="btn-back-track" style="margin-top:18px;">← กลับหน้าสั่งซื้อ</button>
+  `;
+}
+
+function renderConfirm(){
+  const o = state.currentOrder;
+  if(!o) return `<div class="empty-state">ไม่พบคำสั่งซื้อ</div>`;
+  const rows = Object.entries(o.items).map(([id,q])=>{
+    const item = MENU.find(m=>m.id===id);
+    return `<div class="row"><span>${esc(item.name)} × ${q}</span><span>฿${q*PRICE}</span></div>`;
+  }).join('');
+  return `
+    <div class="ticket">
+      <div class="ticket-inner">
+        <div class="eyebrow">คิวของคุณ</div>
+        <div class="queue-no">${o.queueNo}</div>
+        <div class="status-pill ${statusClass(o.status)}">${esc(o.status)}</div>
+      </div>
+      <div class="row"><span>ผู้สั่ง</span><span>${esc(o.customer.name)}</span></div>
+      <div class="row"><span>ห้อง</span><span>${esc(o.customer.room)}</span></div>
+      ${rows}
+      <div class="row total"><span>ยอดชำระ</span><span>฿${o.total}</span></div>
+    </div>
+    ${o.status!==CLOSED_STATUS ? `<button class="btn-primary" id="btn-save-receipt" style="margin-top:18px;">บันทึกรูปใบเสร็จลงเครื่อง</button>` : ''}
+    <div style="font-size:12px; color:var(--cream-dim); opacity:0.7; text-align:center; margin-top:8px;">เก็บเลขคิว <b>${esc(o.queueNo)}</b> ไว้เช็คสถานะภายหลังได้</div>
+    <button class="btn-ghost" id="btn-new-order">สั่งไม้ใหม่อีกครั้ง</button>
+  `;
+}
+
+/* ---- admin screens ---- */
+function renderAdmin(){
+  if(!state.adminAuthed){
+    // Deliberately NOT tied to state.pinInput.length — a fixed icon regardless of how many
+    // digits have been typed, so no one watching the screen can count the PIN length.
+    const hasInput = state.pinInput.length > 0;
+    const lockIndicator = `<div style="font-size:30px; margin:16px 0; min-height:32px; opacity:${hasInput?'1':'0.35'}; transition:opacity .15s;">🔒</div>`;
+    return header() + `
+    <div class="content pin-gate">
+      <div class="page-title">เข้าสู่ระบบหลังบ้าน</div>
+      ${lockIndicator}
+      <div class="pin-error">${state.pinError ? esc(state.pinError) : '&nbsp;'}</div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:260px; margin:0 auto;">
+        ${[1,2,3,4,5,6,7,8,9,'del','0','ok'].map(d=>{
+          const label = d==='del' ? '⌫' : d==='ok' ? '✓' : d;
+          const cls = d==='ok' ? 'step-btn ok' : 'step-btn';
+          return `<button class="${cls}" style="width:100%; height:54px; font-size:18px;" data-pin="${d}">${label}</button>`;
+        }).join('')}
+      </div>
+      <button class="btn-ghost" id="btn-exit-admin" style="max-width:260px; margin:24px auto 0;">← กลับหน้าสั่งของ</button>
+    </div>`;
+  }
+  return header() + `<div class="content">
+    <div class="admin-topbar">
+      <button class="back-link" id="btn-exit-admin" style="margin-bottom:0;">← ออกจากหลังบ้าน</button>
+      ${state.adminTab==='orders' ? `
+      <button class="sound-toggle ${state.soundOn?'':'off'}" id="btn-toggle-sound" type="button" title="เปิด/ปิดเสียงแจ้งเตือนออเดอร์ใหม่">
+        <span class="st-dot"></span>${state.soundOn ? '🔔 เสียงเปิด' : '🔕 เสียงปิด'}
+      </button>` : ''}
+    </div>
+    <div class="admin-tabs">
+      <button class="admin-tab ${state.adminTab==='orders'?'on':''}" id="tab-orders" style="position:relative;">รายการสั่งซื้อ${state.newOrderPing ? '<span style="position:absolute; top:-3px; right:-3px; width:9px; height:9px; border-radius:50%; background:var(--gold); box-shadow:0 0 0 2px var(--ink);"></span>' : ''}</button>
+      <button class="admin-tab ${state.adminTab==='stock'?'on':''}" id="tab-stock">สต็อกสินค้า</button>
+      <button class="admin-tab ${state.adminTab==='backup'?'on':''}" id="tab-backup">สำรองข้อมูล</button>
+      <button class="admin-tab ${state.adminTab==='settings'?'on':''}" id="tab-settings">ตั้งค่าร้าน</button>
+    </div>
+    ${state.adminTab==='orders' ? renderAdminOrders()
+      : state.adminTab==='stock' ? renderAdminStock()
+      : state.adminTab==='backup' ? renderAdminBackup()
+      : renderAdminSettings()}
+  </div>`;
+}
+
+function renderAdminStock(){
+  if(!state.adminStockDraft) return `<div class="empty-state">กำลังโหลด...</div>`;
+  const rows = MENU.map(m=>{
+    const v = state.adminStockDraft[m.id];
+    return `
+    <div class="stock-field">
+      <div class="sf-emoji">${itemThumb(m)}</div>
+      <div class="sf-name">${esc(m.name)}</div>
+      <div class="sf-stepper">
+        <button type="button" class="sf-step-btn" data-stock-step="dec" data-stock-step-for="${m.id}">−</button>
+        <input type="number" min="0" inputmode="numeric" placeholder="ไม่จำกัด" data-stock-for="${m.id}" value="${v===null||v===undefined?'':v}">
+        <button type="button" class="sf-step-btn" data-stock-step="inc" data-stock-step-for="${m.id}">+</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `
+    <p style="font-size:12.5px; color:var(--cream-dim); opacity:0.8; margin:0 0 14px; line-height:1.6;">
+      ใส่จำนวนไม้ที่เหลือของแต่ละเมนู หรือกด +/− เพื่อปรับทีละ 1 ได้เลย · ปล่อยว่างไว้ = ไม่จำกัดจำนวน · อัปเดตแบบเรียลไทม์ให้หน้าร้านทันทีที่แก้ ไม่ต้องกดบันทึก
+    </p>
+    ${rows}
+    <div id="stock-saved-indicator" style="font-size:12.5px; color:var(--gold); opacity:${state.stockSaved?1:0}; transition:opacity .25s; margin-top:6px; height:16px;">✓ บันทึกแล้ว</div>
+  `;
+}
+
+function renderAdminOrders(){
+  if(!state.adminOrdersLoaded) return `<div class="empty-state">กำลังโหลด...</div>`;
+  if(state.adminOrders.length===0) return `<div class="empty-state">ยังไม่มีคำสั่งซื้อเข้ามา</div>`;
+  return state.adminOrders.map(o=>{
+    const itemsTxt = Object.entries(o.items).map(([id,q])=>{
+      const item = MENU.find(m=>m.id===id);
+      return `${item?item.name:id} ×${q}`;
+    }).join(' · ');
+    const time = new Date(o.createdAt).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
+    return `
+    <div class="order-item">
+      <div class="oi-head">
+        <div class="oi-q">${o.queueNo}</div>
+        <div class="oi-time">${time}</div>
+      </div>
+      <div class="oi-cust"><b>${esc(o.customer.name)}</b> · ห้อง ${esc(o.customer.room)} · ${esc(o.customer.phone)}</div>
+      <div class="oi-items">${esc(itemsTxt)}</div>
+      ${o.slipImage?`<img class="oi-slip-thumb" src="${o.slipImage}" data-view-slip="${o.id}">`:''}
+      <div class="oi-total" style="margin-bottom:10px;">ยอดชำระ ฿${o.total}</div>
+      <select class="status-select ${statusClass(o.status)}" data-status-for="${o.id}">
+        ${STATUSES.map(s=>`<option value="${esc(s)}" ${o.status===s?'selected':''}>${esc(s)}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('') + (state.modalImg ? `<div class="modal-bg" id="modal-bg"><img src="${state.modalImg}"></div>` : '');
+}
+
+function renderAdminBackup(){
+  const msg = state.backupMsg;
+  return `
+    <div class="backup-box">
+      <h3>ดาวน์โหลดสรุปออเดอร์ (Excel)</h3>
+      <p>ไฟล์ .xlsx เปิดดูใน Excel/Google Sheets ได้ทันที เหมาะสำหรับเก็บบันทึกยอดขายและตรวจสอบย้อนหลัง</p>
+      <button class="btn-secondary" id="btn-export-excel">ดาวน์โหลดไฟล์ Excel</button>
+    </div>
+    <div class="backup-box">
+      <h3>สำรองข้อมูลแบบเต็ม (สำหรับกู้คืน)</h3>
+      <p>ไฟล์ .json ที่มีข้อมูลทุกอย่างครบ รวมรูปสลิปและการตั้งค่าร้าน ใช้กู้คืนระบบได้ถ้าข้อมูลหาย เก็บไฟล์นี้ไว้ในที่ปลอดภัย เพราะมีข้อมูลส่วนตัวลูกค้าอยู่ในนั้น</p>
+      <button class="btn-secondary" id="btn-export-json">ดาวน์โหลดไฟล์สำรองเต็ม</button>
+    </div>
+    <div class="backup-box">
+      <h3>กู้คืนข้อมูลจากไฟล์สำรอง</h3>
+      <p>เลือกไฟล์ .json ที่เคยดาวน์โหลดไว้ ระบบจะนำออเดอร์และการตั้งค่ากลับเข้ามา</p>
+      <div class="upload-box" style="margin-bottom:0;">
+        <input type="file" accept="application/json" id="f-restore">
+        <div class="up-icon">♻️</div>
+        <div class="up-txt">เลือกไฟล์สำรอง (.json)</div>
+      </div>
+    </div>
+    ${msg ? `<div class="import-msg ${msg.type==='err'?'err':''}">${esc(msg.text)}</div>` : ''}
+  `;
+}
+
+function renderAdminSettings(){
+  const s = state.settingsDraft || state.settings;
+  const itemImgs = (state.settingsDraft && state.settingsDraft.itemImages) || {};
+  const itemRows = MENU.map(m=>{
+    const img = itemImgs[m.id];
+    return `
+    <div class="imgrow">
+      <div class="ir-thumb">${img ? `<img src="${img}" alt="${esc(m.name)}">` : m.emoji}</div>
+      <div class="ir-name">${esc(m.name)}</div>
+      <div class="ir-actions">
+        <label class="ir-upload">เลือกรูป<input type="file" accept="image/*" data-item-img="${m.id}"></label>
+        ${img ? `<button type="button" class="ir-remove" data-item-img-remove="${m.id}">ลบ</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="settings-box">
+      <div class="field"><label>ชื่อร้าน</label><input id="s-shopname" value="${esc(s.shopName)}"></div>
+
+      <div class="field">
+        <label>โลโก้ร้าน</label>
+        <div class="logo-upload-row">
+          <div class="logo-preview">${s.logoImage ? `<img src="${s.logoImage}" alt="โลโก้ร้าน">` : '🍢'}</div>
+          <div style="flex:1;">
+            <label class="ir-upload" style="display:block; text-align:center;">${s.logoImage ? 'เปลี่ยนโลโก้' : 'อัปโหลดโลโก้'}<input type="file" accept="image/*" id="s-logo-file"></label>
+          </div>
+          ${s.logoImage ? `<button type="button" class="ir-remove" id="btn-remove-logo">ลบ</button>` : ''}
+        </div>
+        <div class="field-hint">แสดงแทนไอคอน 🍢 ที่หัวเว็บ · แนะนำรูปสี่เหลี่ยมจัตุรัส ขนาด 200×200 พิกเซล (พื้นหลังโปร่งใสได้) ไฟล์ .png หรือ .jpg ไม่เกิน 1MB</div>
+      </div>
+
+      <div class="field">
+        <label>รูป QR รับเงินของร้าน</label>
+        <div class="upload-box">
+          <input type="file" accept="image/*" id="s-qr-file">
+          <div class="up-icon">🏦</div>
+          <div class="up-txt">${s.qrImage ? 'เปลี่ยนรูป QR' : 'อัปโหลดรูป QR ธนาคาร'}</div>
+          <div class="up-sub">ลูกค้าจะเห็นรูปนี้ตอนจ่ายเงิน</div>
+        </div>
+        ${s.qrImage ? `<img class="qr-static-img" src="${s.qrImage}" style="margin-top:4px;">` : ''}
+      </div>
+
+      <h3>รูปสินค้า (แทนอิโมจิ)</h3>
+      <div class="field-hint" style="margin:0 0 12px;">แนะนำรูปสี่เหลี่ยมจัตุรัส ขนาด 300×300 พิกเซล (อัตราส่วน 1:1) ไฟล์ .jpg หรือ .png ไม่เกิน 1MB ต่อรูป · ถ้าไม่อัปโหลด จะแสดงอิโมจิเดิมแทน</div>
+      ${itemRows}
+
+      <button class="btn-primary" id="btn-save-settings">บันทึกการตั้งค่า</button>
+    </div>`;
+}
+
+/* ---------------- EVENTS ---------------- */
+function attachHandlers(){
+  const app = document.getElementById('app');
+  const on = (id, ev, fn)=>{ const el = document.getElementById(id); if(el) el.addEventListener(ev, fn); };
+
+  on('btn-track','click', goTrack);
+  on('btn-do-track','click', checkOrderStatus);
+  on('btn-back-track','click', ()=>setScreen('menu'));
+  on('f-track','keydown', (e)=>{ if(e.key==='Enter') checkOrderStatus(); });
+  on('btn-save-receipt-track','click', ()=>{ if(state.trackResult) saveTicketImage(state.trackResult); });
+  on('btn-save-receipt','click', ()=>{ if(state.currentOrder) saveTicketImage(state.currentOrder); });
+  on('btn-exit-admin','click', exitAdmin);
+  on('btn-checkout','click', goCheckout);
+  on('f-room','input', (e)=>{ const v=e.target.value; const clean=v.replace(/[^0-9/]/g,''); if(v!==clean) e.target.value=clean; });
+  on('f-phone','input', (e)=>{ const v=e.target.value; const clean=v.replace(/[^0-9]/g,'').slice(0,10); if(v!==clean) e.target.value=clean; });
+  on('btn-back-menu','click', ()=>setScreen('menu'));
+  on('btn-to-payment','click', goPayment);
+  on('btn-back-checkout','click', ()=>setScreen('checkout'));
+  on('btn-submit','click', submitOrder);
+  on('btn-new-order','click', resetOrder);
+  on('f-slip','change', (e)=> handleSlipFile(e.target));
+  on('s-qr-file','change', (e)=> handleQrFile(e.target));
+  on('s-logo-file','change', (e)=> handleLogoFile(e.target));
+  on('btn-remove-logo','click', removeLogoImage);
+  on('save-modal-close','click', ()=>{ if(state.saveImageModal && state.saveImageModal.url) URL.revokeObjectURL(state.saveImageModal.url); state.saveImageModal=null; render(); });
+  on('pickup-notice-close','click', ()=>{ state.pickupNotice=false; render(); });
+  on('tab-orders','click', ()=>{ state.adminTab='orders'; state.backupMsg=null; render(); });
+  on('tab-stock','click', ()=>{ state.adminTab='stock'; state.backupMsg=null; render(); loadAdminStock(); });
+  on('tab-backup','click', ()=>{ state.adminTab='backup'; state.backupMsg=null; render(); });
+  on('tab-settings','click', goAdminSettings);
+  on('btn-export-excel','click', exportExcel);
+  on('btn-export-json','click', exportJSONBackup);
+  on('f-restore','change', (e)=> handleImportFile(e.target));
+  on('btn-save-settings','click', saveSettings);
+  on('modal-bg','click', ()=>{ state.modalImg=null; render(); });
+  on('btn-toggle-sound','click', toggleSound);
+  // order-toast click handlers are bound separately in updateOrderToast(), since
+  // the toast now lives outside #app and isn't rebuilt on every render.
+
+  app.querySelectorAll('[data-stock-for]').forEach(inp=>{
+    inp.addEventListener('input', ()=> scheduleStockSave(500));
+  });
+
+  app.querySelectorAll('[data-act]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.getAttribute('data-id');
+      const delta = btn.getAttribute('data-act')==='inc' ? 1 : -1;
+      changeQty(id, delta);
+    });
+  });
+  app.querySelectorAll('[data-stock-step]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.getAttribute('data-stock-step-for');
+      const dir = btn.getAttribute('data-stock-step');
+      const input = app.querySelector('[data-stock-for="'+id+'"]');
+      if(!input) return;
+      const cur = input.value.trim();
+      if(cur===''){
+        if(dir==='inc') input.value = 1; // was "unlimited" — start counting from 1
+        return; // "-" on unlimited does nothing, there's nothing to subtract from
+      }
+      let n = parseInt(cur,10);
+      if(isNaN(n)) n = 0;
+      n = dir==='inc' ? n+1 : Math.max(0, n-1);
+      input.value = n;
+      scheduleStockSave(150);
+    });
+  });
+  app.querySelectorAll('[data-item-img]').forEach(inp=>{
+    inp.addEventListener('change', (e)=> handleItemImageFile(e.target, inp.getAttribute('data-item-img')));
+  });
+  app.querySelectorAll('[data-item-img-remove]').forEach(btn=>{
+    btn.addEventListener('click', ()=> removeItemImage(btn.getAttribute('data-item-img-remove')));
+  });
+  app.querySelectorAll('[data-pin]').forEach(btn=>{
+    btn.addEventListener('click', ()=> tryPin(btn.getAttribute('data-pin')));
+  });
+  app.querySelectorAll('[data-status-for]').forEach(sel=>{
+    sel.addEventListener('change', ()=> updateStatus(sel.getAttribute('data-status-for'), sel.value));
+  });
+  app.querySelectorAll('[data-view-slip]').forEach(img=>{
+    img.addEventListener('click', ()=>{ state.modalImg = img.src; render(); });
+  });
+
+  on('brand-mark','click', handleBrandMarkTap);
+}
+
+/* ---------------- SECRET BACK-OFFICE ENTRY ----------------
+   No visible button anymore. Two ways in, both undocumented on the page:
+   1) URL hash  #backoffice   (bookmark this on the owner's own phone)
+   2) Tap the shop logo 7 times within 3 seconds (works even without typing a URL)
+------------------------------------------------------------- */
+let brandTapTimes = [];
+async function goAdminEntry(){
+  await ensureSettings();
+  state.screen = 'admin';
+  render();
+}
+function handleBrandMarkTap(){
+  const now = Date.now();
+  brandTapTimes.push(now);
+  brandTapTimes = brandTapTimes.filter(t => now - t < 3000);
+  if(brandTapTimes.length >= 7){
+    brandTapTimes = [];
+    goAdminEntry();
+  }
+}
+function checkAdminHash(){
+  if(location.hash === '#backoffice'){
+    history.replaceState(null, '', location.pathname + location.search);
+    goAdminEntry();
+    return true;
+  }
+  return false;
+}
+
+/* ---------------- INIT ---------------- */
+(async function init(){
+  await ensureSettings();
+  render();
+  connectLiveStock();
+  checkAdminHash();
+  window.addEventListener('hashchange', checkAdminHash);
+})();
+</script>
+</body>
+</html>
