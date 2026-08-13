@@ -30,8 +30,8 @@ const FILES = {
 };
 
 const MENU = [
-  { id: 'bacon_enoki', name: 'เบคอนพันเห็ดเข็มทอง', emoji: '🥓' },
-  { id: 'pork_enoki', name: 'หมูสามชั้นพันเห็ดเข็มทอง', emoji: '🍖' },
+  { id: 'bacon_enoki', name: 'หมูสามชั้นพันเห็ดเข็มทอง', emoji: '🍖' },
+  { id: 'pork_enoki', name: 'หมูสามชั้น', emoji: '🍖' },
   { id: 'bologna', name: 'โบโลน่า', emoji: '🌭' },
   { id: 'tofu_cheese', name: 'เต้าหู้ชีส', emoji: '🧀' },
   { id: 'corn', name: 'ข้าวโพด', emoji: '🌽' },
