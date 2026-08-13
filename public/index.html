@@ -1193,7 +1193,7 @@ function renderMenu(){
   }).join('');
   return `
     <div class="page-title">เลือกไม้ที่อยากทาน</div>
-    <div class="page-sub">ทุกไม้ราคา ฿${PRICE} · จำนวนคงเหลืออัปเดตสดจากร้าน</div>
+    <div class="page-sub">ทุกไม้ราคา ฿${PRICE}</div>
     <div class="menu-list">${rows}</div>`;
 }
 function cartBar(){
@@ -1392,7 +1392,7 @@ function renderAdminStock(){
   }).join('');
   return `
     <p style="font-size:12.5px; color:var(--cream-dim); opacity:0.8; margin:0 0 14px; line-height:1.6;">
-      ใส่จำนวนไม้ที่เหลือของแต่ละเมนู หรือกด +/− เพื่อปรับทีละ 1 ได้เลย · ปล่อยว่างไว้ = ไม่จำกัดจำนวน · อัปเดตแบบเรียลไทม์ให้หน้าร้านทันทีที่แก้ ไม่ต้องกดบันทึก
+      ใส่ไม้ที่เหลือของแต่ละเมนู หรือกด +/− เพื่อปรับทีละ 1 ได้เลย · ปล่อยว่างไว้ = ไม่จำกัดจำนวน · อัปเดตแบบเรียลไทม์ให้หน้าร้านทันทีที่แก้ ไม่ต้องกดบันทึก
     </p>
     ${rows}
     <div id="stock-saved-indicator" style="font-size:12.5px; color:var(--gold); opacity:${state.stockSaved?1:0}; transition:opacity .25s; margin-top:6px; height:16px;">✓ บันทึกแล้ว</div>
