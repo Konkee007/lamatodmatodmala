@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" sizes="32x32" href="logo.png">
 <title>ล่าหมาทอด มาทอดหมาล่า</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -105,6 +106,7 @@ input,select{font-family:'Sarabun',sans-serif;}
 .item-emoji img{width:100%;height:100%;object-fit:cover;display:block;}
 .item-info{width:100%; text-align:center;}
 .item-name{font-weight:600; font-size:15px; line-height:1.3;}
+.item-note{font-weight:500; font-size:12px; color:#8A7A68;}
 .item-price{color:var(--gold); font-size:12.5px; margin-top:4px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap;}
 .stock-badge{font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; background:rgba(76,122,94,0.18); color:var(--jade);}
 .stock-badge.low{background:rgba(255,107,53,0.18); color:var(--ember);}
@@ -329,11 +331,11 @@ input,select{font-family:'Sarabun',sans-serif;}
 /* Menu display info only (name/emoji) — live stock numbers come from the
    server so the backend is always the single source of truth. */
 const MENU = [
-  {id:'bacon_enoki', name:'เบคอนพันเห็ดเข็มทอง', emoji:'🥓'},
-  {id:'pork_enoki', name:'หมูสามชั้นพันเห็ดเข็มทอง', emoji:'🍖'},
+  {id:'bacon_enoki', name:'หมูสามชั้นพันเห็ดเข็มทอง', emoji:'🍖'},
+  {id:'pork_enoki', name:'หมูสามชั้น', emoji:'🍖'},
   {id:'bologna', name:'โบโลน่า', emoji:'🌭'},
   {id:'tofu_cheese', name:'เต้าหู้ชีส', emoji:'🧀'},
-  {id:'corn', name:'ข้าวโพด', emoji:'🌽'},
+  {id:'corn', name:'ข้าวโพด', emoji:'🌽', note:'แบบแพ ไม่ได้เสียบไม้'},
   {id:'sausage_cheese', name:'ไส้กรอกชีส', emoji:'🧆'},
   {id:'potato', name:'มันฝรั่ง', emoji:'🥔'},
 ];
@@ -623,13 +625,13 @@ function goTrack(){ state.trackResult=null; state.trackError=null; state.trackIn
 async function checkOrderStatus(){
   const input = document.getElementById('f-track');
   const val = (input ? input.value : state.trackInput).trim().toUpperCase();
-  if(!val){ state.trackError='กรุณากรอกหมายเลขคิว'; state.trackResult=null; render(); return; }
+  if(!val){ state.trackError='กรุณากรอกหมายเลขคิวก่อน'; state.trackResult=null; render(); return; }
   state.trackInput = val;
   state.trackLoading = true; state.trackError=null; state.trackResult=null; render();
   try{
     state.trackResult = await api('/api/orders/track/'+encodeURIComponent(val));
   }catch(e){
-    state.trackError = 'ไม่พบคำสั่งซื้อหมายเลข ' + esc(val) + ' ตรวจสอบเลขคิวอีกครั้ง';
+    state.trackError = 'ไม่พบคำสั่งซื้อหมายเลข ' + esc(val) + ' โปรดตรวจสอบเลขคิวอีกครั้ง';
   }
   state.trackLoading = false;
   render();
@@ -948,7 +950,7 @@ async function tryPin(digit){
 }
 
 async function submitPin(){
-  if(!state.pinInput){ state.pinError='กรุณากรอกรหัส PIN'; render(); return; }
+  if(!state.pinInput){ state.pinError='กรุณากรอกรหัส PIN ที่ถูกต้อง'; render(); return; }
   try{
     const r = await api('/api/admin/login', {method:'POST', body:{pin:state.pinInput}});
     if(r.ok){
@@ -1179,7 +1181,7 @@ function renderMenu(){
     <div class="item-card ${qty>0?'active':''} ${soldOut?'soldout':''}">
       <div class="item-emoji">${itemThumb(m)}</div>
       <div class="item-info">
-        <div class="item-name">${esc(m.name)}</div>
+        <div class="item-name">${esc(m.name)}${m.note?` <span class="item-note">(${esc(m.note)})</span>`:''}</div>
         <div class="item-price">฿${PRICE} / ไม้ ${badge}</div>
       </div>
       <div class="stepper">
@@ -1191,10 +1193,9 @@ function renderMenu(){
   }).join('');
   return `
     <div class="page-title">เลือกไม้ที่อยากทาน</div>
-    <div class="page-sub">ทุกไม้ราคา ฿${PRICE}</div>
+    <div class="page-sub">ทุกไม้ราคา ฿${PRICE} · จำนวนคงเหลืออัปเดตสดจากร้าน</div>
     <div class="menu-list">${rows}</div>`;
 }
-
 function cartBar(){
   const count = cartCount(), total = cartTotal();
   if(state.screen==='menu'){
@@ -1236,7 +1237,7 @@ function renderCheckout(){
     <div class="page-sub">กรอกให้ครบเพื่อความสะดวกตอนเรียกคิว</div>
     ${recap()}
     <div class="field"><label>ชื่อผู้สั่ง</label><input id="f-name" placeholder="ชื่อ-นามสกุล หรือชื่อเล่น" value="${esc(c.name)}"></div>
-    <div class="field"><label>ห้อง / ที่อยู่รับของ</label><input id="f-room" placeholder="เช่น 1/1, 2/3, 6/11" value="${esc(c.room)}"></div>
+    <div class="field"><label>ห้อง</label><input id="f-room" placeholder="เช่น 1/1, 2/3, 6/11" value="${esc(c.room)}"></div>
     <div class="field"><label>เบอร์โทรศัพท์</label><input id="f-phone" placeholder="08xxxxxxxx" inputmode="numeric" maxlength="10" value="${esc(c.phone)}"></div>
     ${state.error?`<div style="color:var(--ember); font-size:13px; margin-top:-8px; margin-bottom:14px;">${esc(state.error)}</div>`:''}
   `;
@@ -1616,7 +1617,7 @@ function checkAdminHash(){
   return false;
 }
 
-/* ---------------- INIT ---------------- */
+
 (async function init(){
   await ensureSettings();
   render();
